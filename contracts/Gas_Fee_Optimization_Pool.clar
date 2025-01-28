@@ -66,3 +66,18 @@
   (begin
     (asserts! (< tx-id (var-get tx-count)) ERR_INVALID_TX_ID)
     (refund-tx tx-id)))
+
+;; Instead of processing all at once, this processes only the next transaction in range
+(define-public (process-next-transaction (start-id uint) (end-id uint))
+  (begin
+    (asserts! (< start-id (var-get tx-count)) ERR_INVALID_TX_ID)
+    (asserts! (<= start-id end-id) ERR_INVALID_TX_ID)
+    (if (<= start-id end-id)
+      (let ((transfer-result (transfer-tx start-id)))
+        (match transfer-result
+          success (ok (+ start-id u1)) ;; Return the next tx-id to be processed
+          error (err error))) ;; Return the error
+      (ok end-id)))) ;; End of range or no transactions left to process
+
+(define-public (get-pool-size)
+  (ok (var-get tx-count)))
