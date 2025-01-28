@@ -1,0 +1,27 @@
+[project]
+name = "Gas_Fee_Optimization_Pool"
+authors = []
+description = ""
+telemetry = true
+requirements = []
+
+[contracts.Gas_Fee_Optimization_Pool]
+path = "contracts/Gas_Fee_Optimization_Pool.clar"
+depends_on = []
+
+[contracts.Gas_Fee_Extension]
+path = "contracts/Gas_Fee_Extension.clar"
+depends_on = ["Gas_Fee_Optimization_Pool"]
+
+[repl]
+costs_version = 2
+parser_version = 2
+
+[repl.analysis]
+passes = ["check_checker"]
+
+[repl.analysis.check_checker]
+strict = false
+trusted_sender = false
+trusted_caller = false
+callee_filter = false
