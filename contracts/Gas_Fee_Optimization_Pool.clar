@@ -37,3 +37,32 @@
         (map-delete tx-pool {tx-id: tx-id})
         (ok success))
       error (err error))))
+
+;; Public Functions
+(define-public (add-transaction (recipient principal) (amount uint))
+  (let (
+    (sender tx-sender)
+    (current-count (var-get tx-count))
+  )
+    ;; Check for valid amount
+    (asserts! (> amount u0) ERR_INVALID_AMOUNT)
+    ;; Check for valid recipient (not sending to self or contract)
+    (asserts! (and (not (is-eq recipient tx-sender)) (not (is-eq recipient (as-contract tx-sender)))) ERR_INVALID_RECIPIENT)
+    ;; Perform the transfer
+    (try! (stx-transfer? amount sender (as-contract tx-sender)))
+    ;; Add to pool
+    (map-set tx-pool
+      {tx-id: current-count}
+      {sender: sender, recipient: recipient, amount: amount})
+    (var-set tx-count (+ current-count u1))
+    (ok current-count)))
+
+(define-public (execute-single-tx (tx-id uint))
+  (begin
+    (asserts! (< tx-id (var-get tx-count)) ERR_INVALID_TX_ID)
+    (transfer-tx tx-id)))
+
+(define-public (cancel-single-tx (tx-id uint))
+  (begin
+    (asserts! (< tx-id (var-get tx-count)) ERR_INVALID_TX_ID)
+    (refund-tx tx-id)))
