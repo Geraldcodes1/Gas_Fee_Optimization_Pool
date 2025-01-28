@@ -22,3 +22,61 @@
 (define-constant ERR_INVALID_PRIORITY (err u106))
 (define-constant ERR_INVALID_TIME (err u107))
 (define-constant ERR_BATCH_FAILED (err u108))
+
+;; Contract Variables
+(define-data-var admin principal tx-sender)
+(define-data-var min-batch-size uint u5)
+(define-data-var max-batch-size uint u20)
+(define-data-var gas-optimization-enabled bool true)
+
+;; Data Maps
+(define-map extended-tx-data
+  { tx-id: uint }
+  {
+    priority: uint,
+    scheduled-time: uint,
+    gas-price: uint,
+    batch-id: (optional uint)
+  }
+)
+
+(define-map batch-data
+  { batch-id: uint }
+  {
+    tx-count: uint,
+    total-amount: uint,
+    status: (string-ascii 20),
+    created-at: uint
+  }
+)
+
+(define-map user-stats
+  principal
+  {
+    total-transactions: uint,
+    total-amount: uint,
+    last-active: uint
+  }
+)
+
+;; Private Functions
+(define-private (update-user-stats (user principal) (amount uint))
+  (let (
+    (current-stats (default-to 
+      { total-transactions: u0, total-amount: u0, last-active: u0 }
+      (map-get? user-stats user)))
+  )
+    (map-set user-stats
+      user
+      {
+        total-transactions: (+ (get total-transactions current-stats) u1),
+        total-amount: (+ (get total-amount current-stats) amount),
+        last-active: block-height
+      }
+    )
+  ))
+
+(define-private (is-optimal-gas-time)
+  (let ((current-height block-height))
+    ;; Simple gas optimization check based on block height
+    (is-eq (mod current-height u10) u0)))
